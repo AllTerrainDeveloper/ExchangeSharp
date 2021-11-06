@@ -14,11 +14,15 @@ namespace ExchangeSharp
 {
     using System;
 
-    /// <summary>Result of an exchange order</summary>
-    public sealed class ExchangeOrderResult
-    {
-        /// <summary>Order id</summary>
-        public string OrderId { get; set; }
+	/// <summary>Result of an exchange order</summary>
+	public sealed class ExchangeOrderResult
+	{
+		public bool Success {get; set;}
+		public int ErrorCode{ get; set; }
+		public string RawJson { get; set; } = "";
+
+		/// <summary>Order id</summary>
+		public string OrderId { get; set; }
 
         /// <summary>
         /// Client Order id

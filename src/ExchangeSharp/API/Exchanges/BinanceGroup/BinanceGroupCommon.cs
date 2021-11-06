@@ -535,6 +535,7 @@ namespace ExchangeSharp.BinanceGroup
 			payload["symbol"] = order.MarketSymbol;
 			payload["newClientOrderId"] = order.ClientOrderId;
 			payload["side"] = order.IsBuy ? "BUY" : "SELL";
+
 			if (order.OrderType == OrderType.Stop)
 				payload["type"] = "STOP_LOSS";//if order type is stop loss/limit, then binance expect word 'STOP_LOSS' inestead of 'STOP'
 			else if (order.IsPostOnly == true)
@@ -560,12 +561,56 @@ namespace ExchangeSharp.BinanceGroup
 			}
 			order.ExtraParameters.CopyTo(payload);
 
-			JToken? token = await MakeJsonRequestAsync<JToken>("/order", BaseUrlApi, payload, "POST");
+			JToken? token = order.IsMargin ?
+				await MakeJsonRequestAsync<JToken>("/margin/order", BaseUrlSApi, payload, "POST") :
+				await MakeJsonRequestAsync<JToken>("/order", BaseUrlApi, payload, "POST");
+
             if (token is null)
             {
                 return null;
             }
 			return ParseOrder(token);
+		}
+
+		protected override async Task<ExchangeOrderResult> OnRepay(ExchangeOrderRequest order)
+		{
+			if (order.Asset == null) throw new ArgumentNullException(nameof(order.Asset));
+			Dictionary<string, object> payload = await GetNoncePayloadAsync();
+
+			payload["asset"] = order.Asset;
+			payload["amount"] = order.Amount;
+
+			JToken? token = await MakeJsonRequestAsync<JToken>("/margin/repay", BaseUrlSApi, payload, "POST");
+			if (token is null)
+			{
+				return null;
+			}
+
+			var errorCode = token.Value<int?>("code") ?? 0;
+			if (errorCode < 0)
+			{
+				return new ExchangeOrderResult { Success = false, Message = token["msg"].ConvertInvariant<string>(), ErrorCode = errorCode, RawJson = token.ToString() };
+			}
+
+			return new ExchangeOrderResult { Success = true, OrderId = token["tranId"].ConvertInvariant<long>().ToString() };
+		}
+
+		protected override async Task<ExchangeOrderResult> OnGetMarginAccountInfoAsync()
+		{
+			Dictionary<string, object> payload = await GetNoncePayloadAsync();
+			JToken? token = await MakeJsonRequestAsync<JToken>("/margin/account", BaseUrlSApi, payload, "POST");
+			if (token is null)
+			{
+				return null;
+			}
+
+			var errorCode = token.Value<int?>("code") ?? 0;
+			if (errorCode < 0)
+			{
+				return new ExchangeOrderResult { Success = false, Message = token["msg"].ConvertInvariant<string>(), ErrorCode = errorCode, RawJson = token.ToString() };
+			}
+
+			return new ExchangeOrderResult { Success = true, RawJson = token.ToString() };
 		}
 
 		protected override async Task<ExchangeOrderResult> OnGetOrderDetailsAsync(string orderId, string? marketSymbol = null, bool isClientOrderId = false)
@@ -859,6 +904,13 @@ namespace ExchangeSharp.BinanceGroup
                   }
                 ]
             */
+
+			var errorCode = token.Value<int?>("code") ?? 0;
+			if (errorCode < 0)
+			{
+				return new ExchangeOrderResult { Success = false, Message = token["msg"].ConvertInvariant<string>(), ErrorCode = errorCode, RawJson = token.ToString() };
+			}
+
 			ExchangeOrderResult result = new ExchangeOrderResult
 			{
 				Amount = token["origQty"].ConvertInvariant<decimal>(),
@@ -868,7 +920,9 @@ namespace ExchangeSharp.BinanceGroup
 				OrderDate = CryptoUtility.UnixTimeStampToDateTimeMilliseconds(token["time"].ConvertInvariant<long>(token["transactTime"].ConvertInvariant<long>())),
 				OrderId = token["orderId"].ToStringInvariant(),
 				MarketSymbol = token["symbol"].ToStringInvariant(),
-				ClientOrderId = token["clientOrderId"].ToStringInvariant()
+				ClientOrderId = token["clientOrderId"].ToStringInvariant(),
+				Success = true,
+				RawJson = token.ToString()
 			};
 
 			result.ResultCode = token["status"].ToStringInvariant();

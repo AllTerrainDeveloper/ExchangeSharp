@@ -71,6 +71,25 @@ namespace ExchangeSharp
 		#region REST API
 
 		/// <summary>
+		/// Repays a loan with asset and quatity (or symbol if needed)
+		/// </summary>
+		/// <returns>Transaction id</returns>
+		Task<ExchangeOrderResult> Repay(ExchangeOrderRequest order);
+
+		/// <summary>
+		/// Borrow an asset with quatity
+		/// </summary>
+		/// <returns>Transaction id</returns>
+		Task<ExchangeOrderResult> Borrow(ExchangeOrderRequest order);
+
+		/// <summary>
+		/// Gets margin account info
+		/// </summary>
+		/// <returns>Margin account info</returns>
+		Task<ExchangeOrderResult> GetMarginAccountInfoAsync();
+		
+
+		/// <summary>
 		/// Gets currencies and related data such as IsEnabled and TxFee (if available)
 		/// </summary>
 		/// <returns>Collection of Currencies</returns>

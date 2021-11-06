@@ -232,6 +232,18 @@ namespace ExchangeSharp
 		protected virtual Task<IWebSocket> OnUserDataWebSocketAsync(Action<object> callback) =>
 			throw new NotImplementedException();
 
+		protected virtual Task<ExchangeOrderResult> OnBorrow(ExchangeOrderRequest order) =>
+			throw new NotImplementedException();
+
+		protected virtual Task<ExchangeOrderResult> OnRepay(ExchangeOrderRequest order) =>
+			throw new NotImplementedException();
+
+		protected virtual Task<ExchangeOrderResult> OnGetBorrowedMarginAssetAsync(ExchangeOrderRequest order) =>
+			throw new NotImplementedException();
+
+		protected virtual Task<ExchangeOrderResult> OnGetMarginAccountInfoAsync() =>
+			throw new NotImplementedException();
+
 		#endregion API implementation
 
 		#region Protected methods
@@ -950,6 +962,31 @@ namespace ExchangeSharp
 			var globalBalances = await ExchangeCurrenciesDictionaryToGlobalCurrenciesDictionaryAsync(exchangeBalances);
 
 			return globalBalances;
+		}
+
+		public virtual async Task<ExchangeOrderResult> Borrow(ExchangeOrderRequest order)
+		{
+			await new SynchronizationContextRemover();
+			order.MarketSymbol = NormalizeMarketSymbol(order.MarketSymbol);
+			return await OnBorrow(order);
+		}
+
+		public virtual async Task<ExchangeOrderResult> Repay(ExchangeOrderRequest order)
+		{
+			await new SynchronizationContextRemover();
+			return await OnRepay(order);
+		}
+
+		public virtual async Task<ExchangeOrderResult> GetBorrowedMarginAssetAsync(ExchangeOrderRequest order)
+		{
+			await new SynchronizationContextRemover();
+			order.MarketSymbol = NormalizeMarketSymbol(order.MarketSymbol);
+			return await OnGetBorrowedMarginAssetAsync(order);
+		}
+
+		public virtual async Task<ExchangeOrderResult> GetMarginAccountInfoAsync()
+		{
+			return await OnGetMarginAccountInfoAsync();
 		}
 
 		/// <summary>

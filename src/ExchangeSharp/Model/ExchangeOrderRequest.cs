@@ -21,10 +21,15 @@ namespace ExchangeSharp
     [System.Serializable]
     public class ExchangeOrderRequest
     {
-        /// <summary>
-        /// Market symbol or pair for the order, i.e. btcusd
-        /// </summary>
-        public string MarketSymbol { get; set; }
+		/// <summary>
+		/// Asset, i.e. usdt or btc, or eth
+		/// </summary>
+		public string Asset { get; set; }
+
+		/// <summary>
+		/// Market symbol or pair for the order, i.e. btcusd
+		/// </summary>
+		public string MarketSymbol { get; set; }
 
         /// <summary>
         /// Amount to buy or sell
@@ -109,10 +114,15 @@ namespace ExchangeSharp
         /// </summary>
         Limit,
 
-        /// <summary>
-        /// A market order, you will buy or sell the full amount - use with caution as this will give you a terrible deal if the order book is thin
-        /// </summary>
-        Market,
+		/// <summary>
+		/// A limit order, the order will not buy or sell beyond the price you specify. Immediate or Cancel operation
+		/// </summary>
+		LimitIOC,
+
+		/// <summary>
+		/// A market order, you will buy or sell the full amount - use with caution as this will give you a terrible deal if the order book is thin
+		/// </summary>
+		Market,
 
         /// <summary>
         /// A stop order, you will sell if price reaches a low enough level down to a limit
