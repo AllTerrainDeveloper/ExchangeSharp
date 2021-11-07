@@ -986,7 +986,7 @@ namespace ExchangeSharp
 
 		public virtual async Task<ExchangeOrderResult> GetMarginAccountInfoAsync()
 		{
-			return await OnGetMarginAccountInfoAsync();
+			return await OnGetMarginAccountInfoAsync().ConfigureAwait(false);
 		}
 
 		/// <summary>

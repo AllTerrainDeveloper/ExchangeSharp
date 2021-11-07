@@ -26,6 +26,8 @@ namespace ExchangeSharp
 		/// </summary>
 		public string Asset { get; set; }
 
+		public bool Clamp { get; set; } = false;
+
 		/// <summary>
 		/// Market symbol or pair for the order, i.e. btcusd
 		/// </summary>

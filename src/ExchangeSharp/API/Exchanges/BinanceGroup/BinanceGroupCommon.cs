@@ -547,10 +547,17 @@ namespace ExchangeSharp.BinanceGroup
 				payload["type"] = order.OrderType.ToStringUpperInvariant();
 
 			// Binance has strict rules on which prices and quantities are allowed. They have to match the rules defined in the market definition.
-			decimal outputQuantity = await ClampOrderQuantity(order.MarketSymbol, order.Amount);
+			if (order.Clamp)
+			{
+				decimal outputQuantity = await ClampOrderQuantity(order.MarketSymbol, order.Amount);
 
-			// Binance does not accept quantities with more than 20 decimal places.
-			payload["quantity"] = Math.Round(outputQuantity, 20);
+				// Binance does not accept quantities with more than 20 decimal places.
+				payload["quantity"] = Math.Round(outputQuantity, 20);
+			}
+			else
+			{
+				payload["quantity"] = order.Amount;
+			}
 			payload["newOrderRespType"] = "FULL";
 
 			if (order.OrderType != OrderType.Market)
@@ -597,8 +604,8 @@ namespace ExchangeSharp.BinanceGroup
 
 		protected override async Task<ExchangeOrderResult> OnGetMarginAccountInfoAsync()
 		{
-			Dictionary<string, object> payload = await GetNoncePayloadAsync();
-			JToken? token = await MakeJsonRequestAsync<JToken>("/margin/account", BaseUrlSApi, payload, "POST");
+			Dictionary<string, object> payload = await GetNoncePayloadAsync().ConfigureAwait(false) ;
+			JToken? token = await MakeJsonRequestAsync<JToken>("/margin/account", BaseUrlSApi, payload, "GET").ConfigureAwait(false);
 			if (token is null)
 			{
 				return null;
