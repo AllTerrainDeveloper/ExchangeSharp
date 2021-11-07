@@ -241,7 +241,7 @@ namespace ExchangeSharp
 		protected virtual Task<ExchangeOrderResult> OnGetBorrowedMarginAssetAsync(ExchangeOrderRequest order) =>
 			throw new NotImplementedException();
 
-		protected virtual Task<ExchangeOrderResult> OnGetMarginAccountInfoAsync() =>
+		protected virtual Task<ExchangeAccountAssetBalances> OnGetMarginAccountInfoAsync() =>
 			throw new NotImplementedException();
 
 		#endregion API implementation
@@ -746,7 +746,7 @@ namespace ExchangeSharp
 		/// <returns>Collection of ExchangeMarkets</returns>
 		public virtual async Task<IEnumerable<ExchangeMarket>> GetMarketSymbolsMetadataAsync()
 		{
-			return await Cache.CacheMethod(MethodCachePolicy, async() => (await OnGetMarketSymbolsMetadataAsync()).ToArray(), nameof(GetMarketSymbolsMetadataAsync));
+			return await Cache.CacheMethod(MethodCachePolicy, async() => (await OnGetMarketSymbolsMetadataAsync().ConfigureAwait(false)).ToArray(), nameof(GetMarketSymbolsMetadataAsync)).ConfigureAwait(false);
 		}
 
 		/// <summary>
@@ -984,7 +984,7 @@ namespace ExchangeSharp
 			return await OnGetBorrowedMarginAssetAsync(order);
 		}
 
-		public virtual async Task<ExchangeOrderResult> GetMarginAccountInfoAsync()
+		public virtual async Task<ExchangeAccountAssetBalances> GetMarginAccountInfoAsync()
 		{
 			return await OnGetMarginAccountInfoAsync().ConfigureAwait(false);
 		}
@@ -1000,7 +1000,7 @@ namespace ExchangeSharp
 			if (order.IsPostOnly != null) throw new NotImplementedException("Post Only orders are not supported by this exchange or not implemented in ExchangeSharp. Please submit a PR if you are interested in this feature.");
 			await new SynchronizationContextRemover();
 			order.MarketSymbol = NormalizeMarketSymbol(order.MarketSymbol);
-			return await OnPlaceOrderAsync(order);
+			return await OnPlaceOrderAsync(order).ConfigureAwait(false);
 		}
 
 		/// <summary>

@@ -86,7 +86,7 @@ namespace ExchangeSharp
 		/// Gets margin account info
 		/// </summary>
 		/// <returns>Margin account info</returns>
-		Task<ExchangeOrderResult> GetMarginAccountInfoAsync();
+		Task<ExchangeAccountAssetBalances> GetMarginAccountInfoAsync();
 		
 
 		/// <summary>

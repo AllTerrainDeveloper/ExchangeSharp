@@ -15,11 +15,8 @@ namespace ExchangeSharp
     using System;
 
 	/// <summary>Result of an exchange order</summary>
-	public sealed class ExchangeOrderResult
+	public sealed class ExchangeOrderResult : WebResult
 	{
-		public bool Success {get; set;}
-		public int ErrorCode{ get; set; }
-		public string RawJson { get; set; } = "";
 
 		/// <summary>Order id</summary>
 		public string OrderId { get; set; }
@@ -30,18 +27,6 @@ namespace ExchangeSharp
         /// Not all exchanges support this
         /// </summary>
         public string ClientOrderId { get; set; }
-
-        /// <summary>Result of the order</summary>
-        public ExchangeAPIOrderResult Result { get; set; }
-
-		/// <summary>
-		/// Result/Error code from exchange
-		/// Not all exchanges support this
-		/// </summary>
-		public string ResultCode { get; set; }
-
-        /// <summary>Message if any</summary>
-        public string Message { get; set; }
 
         /// <summary>
 		/// Original order amount in the market currency.

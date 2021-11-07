@@ -494,7 +494,7 @@ namespace ExchangeSharp
 		{
 			await new SynchronizationContextRemover();
 
-			string stringResult = await MakeRequestAsync(url, baseUrl: baseUrl, payload: payload, method: requestMethod);
+			string stringResult = await MakeRequestAsync(url, baseUrl: baseUrl, payload: payload, method: requestMethod).ConfigureAwait(false);
 			T jsonResult = JsonConvert.DeserializeObject<T>(stringResult);
 			if (jsonResult is JToken token)
 			{
