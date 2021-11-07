@@ -450,7 +450,7 @@ namespace ExchangeSharp.OKGroup
             return ParsePlaceOrder(obj, order);
         }
 
-        protected override async Task OnCancelOrderAsync(string orderId, string marketSymbol = null)
+        protected override async Task<ExchangeOrderResult> OnCancelOrderAsync(string orderId, string marketSymbol = null, bool isMargin = false)
         {
             Dictionary<string, object> payload = await GetNoncePayloadAsync();
             if (marketSymbol.Length == 0)
@@ -460,9 +460,12 @@ namespace ExchangeSharp.OKGroup
             payload["symbol"] = marketSymbol;
             payload["order_id"] = orderId;
             await MakeJsonRequestAsync<JToken>("/cancel_order.do", BaseUrl, payload, "POST");
-        }
 
-        protected override async Task<ExchangeOrderResult> OnGetOrderDetailsAsync(string orderId, string marketSymbol = null, bool isClientOrderId = false)
+			//To be implemented in the future
+			return null;
+		}
+
+        protected override async Task<ExchangeOrderResult> OnGetOrderDetailsAsync(string orderId, string marketSymbol = null, bool isClientOrderId = false, bool isMargin = false)
 		{
             List<ExchangeOrderResult> orders = new List<ExchangeOrderResult>();
             Dictionary<string, object> payload = await GetNoncePayloadAsync();

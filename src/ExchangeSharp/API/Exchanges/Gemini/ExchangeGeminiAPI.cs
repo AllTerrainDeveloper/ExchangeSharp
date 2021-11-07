@@ -322,7 +322,7 @@ namespace ExchangeSharp
 			return ParseOrder(obj);
 		}
 
-		protected override async Task<ExchangeOrderResult> OnGetOrderDetailsAsync(string orderId, string marketSymbol = null, bool isClientOrderId = false)
+		protected override async Task<ExchangeOrderResult> OnGetOrderDetailsAsync(string orderId, string marketSymbol = null, bool isClientOrderId = false, bool isMargin = false)
 		{
 			if (string.IsNullOrWhiteSpace(orderId))
 			{
@@ -355,10 +355,13 @@ namespace ExchangeSharp
 			return orders;
 		}
 
-		protected override async Task OnCancelOrderAsync(string orderId, string marketSymbol = null)
+		protected override async Task<ExchangeOrderResult> OnCancelOrderAsync(string orderId, string marketSymbol = null, bool isMargin = false)
 		{
 			object nonce = await GenerateNonceAsync();
 			await MakeJsonRequestAsync<JToken>("/order/cancel", null, new Dictionary<string, object> { { "nonce", nonce }, { "order_id", orderId } });
+
+			//To be implemented in the future
+			return null;
 		}
 
 		protected override async Task<IWebSocket> OnGetTickersWebSocketAsync(Action<IReadOnlyCollection<KeyValuePair<string, ExchangeTicker>>> tickerCallback, params string[] marketSymbols)

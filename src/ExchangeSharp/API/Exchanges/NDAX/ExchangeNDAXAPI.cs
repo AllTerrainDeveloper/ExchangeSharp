@@ -198,7 +198,7 @@ namespace ExchangeSharp
             return resp.ToArray();
         }
 
-        protected override async Task<ExchangeOrderResult> OnGetOrderDetailsAsync(string orderId, string symbol = null, bool isClientOrderId = false)
+        protected override async Task<ExchangeOrderResult> OnGetOrderDetailsAsync(string orderId, string symbol = null, bool isClientOrderId = false, bool isMargin = false)
 		{
 			if (isClientOrderId) throw new NotImplementedException("Querying by client order ID is not implemented in ExchangeSharp. Please submit a PR if you are interested in this feature");
 			await EnsureInstrumentIdsAvailable();
@@ -226,7 +226,7 @@ namespace ExchangeSharp
         }
 
 
-        protected override async Task OnCancelOrderAsync(string orderId, string symbol = null)
+        protected override async Task<ExchangeOrderResult> OnCancelOrderAsync(string orderId, string symbol = null, bool isMargin = false)
         {
             var result = await MakeJsonRequestAsync<GenericResponse>("CancelOrder", null,
                 new Dictionary<string, object>()
@@ -238,7 +238,10 @@ namespace ExchangeSharp
             {
                 throw new APIException($"{result.ErrorCode}:{result.ErrorMsg}");
             }
-        }
+
+			//To be implemented in the future
+			return null;
+		}
 
         protected override async Task<IEnumerable<MarketCandle>> OnGetCandlesAsync(string marketSymbol, int periodSeconds, DateTime? startDate = null, DateTime? endDate = null,
             int? limit = null)

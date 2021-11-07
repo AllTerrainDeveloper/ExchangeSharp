@@ -378,7 +378,7 @@ namespace ExchangeSharp
         /// </summary>
         /// <param name="orderId"></param>
         /// <returns></returns>
-        protected override async Task<ExchangeOrderResult> OnGetOrderDetailsAsync(string orderId, string marketSymbol = null, bool isClientOrderId = false)
+        protected override async Task<ExchangeOrderResult> OnGetOrderDetailsAsync(string orderId, string marketSymbol = null, bool isClientOrderId = false, bool isMargin = false)
 		{
 			var payload = await GetNoncePayloadAsync();
 			if (isClientOrderId)
@@ -422,7 +422,7 @@ namespace ExchangeSharp
         /// </summary>
         /// <param name="orderId">The Original Order Id return from Place Order</param>
         /// <returns></returns>
-        protected override async Task OnCancelOrderAsync(string orderId, string marketSymbol = null)
+        protected override async Task<ExchangeOrderResult> OnCancelOrderAsync(string orderId, string marketSymbol = null, bool isMargin = false)
         {
             // Find order detail
             ExchangeOrderResult order = await GetOrderDetailsAsync(orderId, marketSymbol: marketSymbol);
@@ -430,13 +430,16 @@ namespace ExchangeSharp
             // There is no order to be cancelled
             if (order == null)
             {
-                return;
+                return null;
             }
 
             var payload = await GetNoncePayloadAsync();
 
             JToken token = await MakeJsonRequestAsync<JToken>("/orders/" + orderId, null, payload, "DELETE");
-        }
+
+			//To be implemented in the future
+			return null;
+		}
 
         protected override async Task<ExchangeDepositDetails> OnGetDepositAddressAsync(string currency, bool forceRegenerate = false)
         {

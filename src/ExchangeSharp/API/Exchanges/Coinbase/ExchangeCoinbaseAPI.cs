@@ -714,7 +714,7 @@ namespace ExchangeSharp
 			return ParseOrder(result);
 		}
 
-		protected override async Task<ExchangeOrderResult> OnGetOrderDetailsAsync(string orderId, string marketSymbol = null, bool isClientOrderId = false)
+		protected override async Task<ExchangeOrderResult> OnGetOrderDetailsAsync(string orderId, string marketSymbol = null, bool isClientOrderId = false, bool isMargin = false)
 		{ // Orders may be queried using either the exchange assigned id or the client assigned client_oid. When using client_oid it must be preceded by the client: namespace.
 			JToken obj = await MakeJsonRequestAsync<JToken>("/orders/" + (isClientOrderId ? "client:" : "") + orderId,
 				null, await GetNoncePayloadAsync(), "GET");
@@ -784,11 +784,14 @@ namespace ExchangeSharp
 			}
 		}
 
-		protected override async Task OnCancelOrderAsync(string orderId, string marketSymbol = null)
+		protected override async Task<ExchangeOrderResult> OnCancelOrderAsync(string orderId, string marketSymbol = null, bool isMargin = false)
 		{
 			var jToken = await MakeJsonRequestAsync<JToken>("orders/" + orderId, null, await GetNoncePayloadAsync(), "DELETE");
 			if (jToken.ToStringInvariant() != orderId)
 				throw new APIException($"Cancelled {jToken.ToStringInvariant()} when trying to cancel {orderId}");
+
+			//To be implemented in the future
+			return null;
 		}
 	}
 

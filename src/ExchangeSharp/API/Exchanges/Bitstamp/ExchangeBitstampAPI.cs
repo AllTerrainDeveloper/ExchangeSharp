@@ -220,7 +220,7 @@ namespace ExchangeSharp
             };
         }
 
-        protected override async Task<ExchangeOrderResult> OnGetOrderDetailsAsync(string orderId, string marketSymbol = null, bool isClientOrderId = false)
+        protected override async Task<ExchangeOrderResult> OnGetOrderDetailsAsync(string orderId, string marketSymbol = null, bool isClientOrderId = false, bool isMargin = false)
 		{
             //{
             //    "status": "Finished",
@@ -487,7 +487,7 @@ namespace ExchangeSharp
             return orders2;
         }
 
-        protected override async Task OnCancelOrderAsync(string orderId, string marketSymbol = null)
+        protected override async Task<ExchangeOrderResult> OnCancelOrderAsync(string orderId, string marketSymbol = null, bool isMargin = false)
         {
             if (string.IsNullOrWhiteSpace(orderId))
             {
@@ -496,7 +496,9 @@ namespace ExchangeSharp
             Dictionary<string, object> payload = await GetNoncePayloadAsync();
             payload["id"] = orderId;
             await MakeJsonRequestAsync<JToken>("/cancel_order/", null, payload, "POST");
-        }
+			//To be implemented in the future
+			return null;
+		}
 
         /// <summary>
         /// Function to withdraw from Bitsamp exchange. At the moment only XRP is supported.

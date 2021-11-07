@@ -264,7 +264,7 @@ namespace ExchangeSharp
 		}
 
 		protected override async Task<ExchangeOrderResult> OnGetOrderDetailsAsync(string orderId,
-			string marketSymbol, bool isClientOrderId = false)
+			string marketSymbol, bool isClientOrderId = false, bool isMargin = false)
 		{
 			if (string.IsNullOrEmpty(marketSymbol))
 			{
@@ -285,7 +285,7 @@ namespace ExchangeSharp
 			return ParseOrders(token).First();
 		}
 
-		protected override async Task OnCancelOrderAsync(string orderId, string marketSymbol)
+		protected override async Task<ExchangeOrderResult> OnCancelOrderAsync(string orderId, string marketSymbol, bool isMargin = false)
 		{
 			if (string.IsNullOrEmpty(orderId))
 			{
@@ -301,6 +301,9 @@ namespace ExchangeSharp
 			payload["ordId"] = orderId;
 			payload["instId"] = marketSymbol;
 			await MakeJsonRequestAsync<JToken>("/trade/cancel-order", BaseUrlV5, payload, "POST");
+
+			//To be implemented in the future
+			return null;
 		}
 
 		protected override async Task<ExchangeOrderResult> OnPlaceOrderAsync(ExchangeOrderRequest order)

@@ -257,7 +257,7 @@ namespace ExchangeSharp
         /// </summary>
         /// <param name="orderId"></param>
         /// <returns></returns>
-        protected override async Task<ExchangeOrderResult> OnGetOrderDetailsAsync(string orderId, string marketSymbol = null, bool isClientOrderId = false)
+        protected override async Task<ExchangeOrderResult> OnGetOrderDetailsAsync(string orderId, string marketSymbol = null, bool isClientOrderId = false, bool isMargin = false)
 		{
 			if (isClientOrderId) throw new NotImplementedException("Querying by client order ID is not implemented in ExchangeSharp. Please submit a PR if you are interested in this feature");
 			JToken obj = await MakeJsonRequestAsync<JToken>("/history/order/" + orderId + "/trades", null, await GetNoncePayloadAsync());
@@ -353,11 +353,14 @@ namespace ExchangeSharp
             return result;
         }
 
-        protected override async Task OnCancelOrderAsync(string orderId, string marketSymbol = null)
+        protected override async Task<ExchangeOrderResult> OnCancelOrderAsync(string orderId, string marketSymbol = null, bool isMargin = false)
         {
             // this call returns info about the success of the cancel. Sure would be nice have a return type on this method.
             JToken token = await MakeJsonRequestAsync<JToken>("/order/" + orderId, null, await GetNoncePayloadAsync(), "DELETE");
-        }
+
+			//To be implemented in the future
+			return null;
+		}
 
         private void ParseAveragePriceAndFeesFromFills(ExchangeOrderResult result, JToken fillsToken)
         {

@@ -572,7 +572,7 @@ namespace ExchangeSharp.BinanceGroup
 			return ParseOrder(token);
 		}
 
-		protected override async Task<ExchangeOrderResult> OnRepay(ExchangeOrderRequest order)
+		protected override async Task<ExchangeOrderResult> OnRepayAsync(ExchangeOrderRequest order)
 		{
 			if (order.Asset == null) throw new ArgumentNullException(nameof(order.Asset));
 			Dictionary<string, object> payload = await GetNoncePayloadAsync();
@@ -613,7 +613,7 @@ namespace ExchangeSharp.BinanceGroup
 			return new ExchangeOrderResult { Success = true, RawJson = token.ToString() };
 		}
 
-		protected override async Task<ExchangeOrderResult> OnGetOrderDetailsAsync(string orderId, string? marketSymbol = null, bool isClientOrderId = false)
+		protected override async Task<ExchangeOrderResult> OnGetOrderDetailsAsync(string orderId, string? marketSymbol = null, bool isClientOrderId = false, bool isMargin = false)
 		{
 			Dictionary<string, object> payload = await GetNoncePayloadAsync();
 			if (string.IsNullOrWhiteSpace(marketSymbol))
@@ -627,13 +627,13 @@ namespace ExchangeSharp.BinanceGroup
 			else
 				payload["orderId"] = orderId;
 
-			JToken token = await MakeJsonRequestAsync<JToken>("/order", BaseUrlApi, payload);
+			JToken token = isMargin ? await MakeJsonRequestAsync<JToken>("/margin/order", BaseUrlSApi, payload) : await MakeJsonRequestAsync<JToken>("/order", BaseUrlApi, payload);
 			ExchangeOrderResult result = ParseOrder(token);
 
 			// Add up the fees from each trade in the order
 			Dictionary<string, object> feesPayload = await GetNoncePayloadAsync();
 			feesPayload["symbol"] = marketSymbol!;
-			JToken feesToken = await MakeJsonRequestAsync<JToken>("/myTrades", BaseUrlApi, feesPayload);
+			JToken feesToken = isMargin ? await MakeJsonRequestAsync<JToken>("/margin/myTrades", BaseUrlApi, feesPayload) : await MakeJsonRequestAsync<JToken>("/myTrades", BaseUrlApi, feesPayload);
 			ParseFees(feesToken, result);
 
 			return result;
@@ -763,8 +763,8 @@ namespace ExchangeSharp.BinanceGroup
 			}
 			return trades;
 		}
-
-		protected override async Task OnCancelOrderAsync(string orderId, string? marketSymbol = null)
+		
+		protected override async Task<ExchangeOrderResult> OnCancelOrderAsync(string orderId, string? marketSymbol = null, bool isMargin = true)
 		{
 			Dictionary<string, object> payload = await GetNoncePayloadAsync();
 			if (string.IsNullOrWhiteSpace(marketSymbol))
@@ -775,8 +775,7 @@ namespace ExchangeSharp.BinanceGroup
 			payload["orderId"] = orderId;
             var token = await MakeJsonRequestAsync<JToken>("/order", BaseUrlApi, payload, "DELETE");
 			var cancelledOrder = ParseOrder(token);
-			if (cancelledOrder.OrderId != orderId)
-				throw new APIException($"Cancelled {cancelledOrder.OrderId} when trying to cancel {orderId}");
+			return cancelledOrder;
 		}
 
 		/// <summary>A withdrawal request. Fee is automatically subtracted from the amount.</summary>
@@ -915,6 +914,7 @@ namespace ExchangeSharp.BinanceGroup
 			{
 				Amount = token["origQty"].ConvertInvariant<decimal>(),
 				AmountFilled = token["executedQty"].ConvertInvariant<decimal>(),
+				QuoteAmountFilled = token["cummulativeQuoteQty"].ConvertInvariant<decimal>(),
 				Price = token["price"].ConvertInvariant<decimal>(),
 				IsBuy = token["side"].ToStringInvariant() == "BUY",
 				OrderDate = CryptoUtility.UnixTimeStampToDateTimeMilliseconds(token["time"].ConvertInvariant<long>(token["transactTime"].ConvertInvariant<long>())),
@@ -922,7 +922,7 @@ namespace ExchangeSharp.BinanceGroup
 				MarketSymbol = token["symbol"].ToStringInvariant(),
 				ClientOrderId = token["clientOrderId"].ToStringInvariant(),
 				Success = true,
-				RawJson = token.ToString()
+				RawJson = token.ToString(),
 			};
 
 			result.ResultCode = token["status"].ToStringInvariant();

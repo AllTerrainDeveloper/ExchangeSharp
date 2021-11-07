@@ -708,7 +708,7 @@ namespace ExchangeSharp
 			return result;
 		}
 
-		protected override async Task<ExchangeOrderResult> OnGetOrderDetailsAsync(string orderId, string marketSymbol = null, bool isClientOrderId = false)
+		protected override async Task<ExchangeOrderResult> OnGetOrderDetailsAsync(string orderId, string marketSymbol = null, bool isClientOrderId = false, bool isMargin = false)
 		{
 			if (string.IsNullOrWhiteSpace(orderId))
 			{
@@ -767,13 +767,16 @@ namespace ExchangeSharp
 		//    return token["trades"].Select(t => TradeHistoryToExchangeOrderResult(t));
 		//}
 
-		protected override async Task OnCancelOrderAsync(string orderId, string marketSymbol = null)
+		protected override async Task<ExchangeOrderResult> OnCancelOrderAsync(string orderId, string marketSymbol = null, bool isMargin = false)
 		{
 			object nonce = await GenerateNonceAsync();
 			Dictionary<string, object> payload = new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase)
 			{ { "txid", orderId }, { "nonce", nonce }
 			};
 			await MakeJsonRequestAsync<JToken>("/0/private/CancelOrder", null, payload);
+
+			//To be implemented in the future
+			return null;
 		}
 
 		private async Task<string> GetWebsocketToken()

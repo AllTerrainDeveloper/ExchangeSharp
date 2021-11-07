@@ -197,13 +197,13 @@ namespace ExchangeSharp
 			throw new NotImplementedException();
 		protected virtual Task<ExchangeOrderResult[]> OnPlaceOrdersAsync(params ExchangeOrderRequest[] order) =>
 			throw new NotImplementedException();
-		protected virtual Task<ExchangeOrderResult> OnGetOrderDetailsAsync(string orderId, string? marketSymbol = null, bool isClientOrderId = false) =>
+		protected virtual Task<ExchangeOrderResult> OnGetOrderDetailsAsync(string orderId, string? marketSymbol = null, bool isClientOrderId = false, bool isMargin = false) =>
 			throw new NotImplementedException();
 		protected virtual Task<IEnumerable<ExchangeOrderResult>> OnGetOpenOrderDetailsAsync(string? marketSymbol = null) =>
 			throw new NotImplementedException();
 		protected virtual Task<IEnumerable<ExchangeOrderResult>> OnGetCompletedOrderDetailsAsync(string? marketSymbol = null, DateTime? afterDate = null) =>
 			throw new NotImplementedException();
-		protected virtual Task OnCancelOrderAsync(string orderId, string? marketSymbol = null) =>
+		protected virtual Task<ExchangeOrderResult> OnCancelOrderAsync(string orderId, string? marketSymbol = null, bool isMargin = false) =>
 			throw new NotImplementedException();
 		protected virtual Task<ExchangeWithdrawalResponse> OnWithdrawAsync(ExchangeWithdrawalRequest withdrawalRequest) =>
 			throw new NotImplementedException();
@@ -232,10 +232,10 @@ namespace ExchangeSharp
 		protected virtual Task<IWebSocket> OnUserDataWebSocketAsync(Action<object> callback) =>
 			throw new NotImplementedException();
 
-		protected virtual Task<ExchangeOrderResult> OnBorrow(ExchangeOrderRequest order) =>
+		protected virtual Task<ExchangeOrderResult> OnBorrowAsync(ExchangeOrderRequest order) =>
 			throw new NotImplementedException();
 
-		protected virtual Task<ExchangeOrderResult> OnRepay(ExchangeOrderRequest order) =>
+		protected virtual Task<ExchangeOrderResult> OnRepayAsync(ExchangeOrderRequest order) =>
 			throw new NotImplementedException();
 
 		protected virtual Task<ExchangeOrderResult> OnGetBorrowedMarginAssetAsync(ExchangeOrderRequest order) =>
@@ -964,17 +964,17 @@ namespace ExchangeSharp
 			return globalBalances;
 		}
 
-		public virtual async Task<ExchangeOrderResult> Borrow(ExchangeOrderRequest order)
+		public virtual async Task<ExchangeOrderResult> BorrowAsync(ExchangeOrderRequest order)
 		{
 			await new SynchronizationContextRemover();
 			order.MarketSymbol = NormalizeMarketSymbol(order.MarketSymbol);
-			return await OnBorrow(order);
+			return await OnBorrowAsync(order);
 		}
 
-		public virtual async Task<ExchangeOrderResult> Repay(ExchangeOrderRequest order)
+		public virtual async Task<ExchangeOrderResult> RepayAsync(ExchangeOrderRequest order)
 		{
 			await new SynchronizationContextRemover();
-			return await OnRepay(order);
+			return await OnRepayAsync(order);
 		}
 
 		public virtual async Task<ExchangeOrderResult> GetBorrowedMarginAssetAsync(ExchangeOrderRequest order)
@@ -1026,7 +1026,7 @@ namespace ExchangeSharp
 		/// <param name="marketSymbol">Symbol of order (most exchanges do not require this)</param>
 		/// <param name="isClientOrderId"></param>
 		/// <returns>Order details</returns>
-		public virtual async Task<ExchangeOrderResult> GetOrderDetailsAsync(string orderId, string? marketSymbol = null, bool isClientOrderId = false)
+		public virtual async Task<ExchangeOrderResult> GetOrderDetailsAsync(string orderId, string? marketSymbol = null, bool isClientOrderId = false, bool isMargin = false)
 		{
 			marketSymbol = NormalizeMarketSymbol(marketSymbol);
 			return await Cache.CacheMethod(MethodCachePolicy, async() => await OnGetOrderDetailsAsync(orderId, marketSymbol: marketSymbol, isClientOrderId: isClientOrderId), nameof(GetOrderDetailsAsync), nameof(orderId), orderId, nameof(isClientOrderId), isClientOrderId, nameof(marketSymbol), marketSymbol);
@@ -1061,11 +1061,11 @@ namespace ExchangeSharp
 		/// </summary>
 		/// <param name="orderId">Order id of the order to cancel</param>
 		/// <param name="marketSymbol">Symbol of order (most exchanges do not require this)</param>
-		public virtual async Task CancelOrderAsync(string orderId, string? marketSymbol = null)
+		public virtual async Task<ExchangeOrderResult> CancelOrderAsync(string orderId, string? marketSymbol = null, bool isMargin = false)
 		{
 			// *NOTE* do not wrap in CacheMethodCall
 			await new SynchronizationContextRemover();
-			await OnCancelOrderAsync(orderId, NormalizeMarketSymbol(marketSymbol));
+			return await OnCancelOrderAsync(orderId, NormalizeMarketSymbol(marketSymbol), isMargin);
 		}
 
 		/// <summary>

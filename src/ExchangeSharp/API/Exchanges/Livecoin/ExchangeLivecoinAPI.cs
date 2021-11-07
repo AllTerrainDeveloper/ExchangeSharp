@@ -219,7 +219,7 @@ namespace ExchangeSharp
             return amounts;
         }
 
-        protected override async Task<ExchangeOrderResult> OnGetOrderDetailsAsync(string orderId, string marketSymbol = null, bool isClientOrderId = false)
+        protected override async Task<ExchangeOrderResult> OnGetOrderDetailsAsync(string orderId, string marketSymbol = null, bool isClientOrderId = false, bool isMargin = false)
 		{
 			if (isClientOrderId) throw new NotImplementedException("Querying by client order ID is not implemented in ExchangeSharp. Please submit a PR if you are interested in this feature");
             JToken token = await MakeJsonRequestAsync<JToken>("/exchange/order?orderId=" + orderId, null, await GetNoncePayloadAsync());
@@ -286,7 +286,7 @@ namespace ExchangeSharp
             return new ExchangeOrderResult() { OrderId = token["orderId"].ToStringInvariant(), Result = ExchangeAPIOrderResult.Open };
         }
 
-        protected override async Task OnCancelOrderAsync(string orderId, string marketSymbol = null)
+        protected override async Task<ExchangeOrderResult> OnCancelOrderAsync(string orderId, string marketSymbol = null, bool isMargin = false)
         {
             // can only cancel limit orders, which kinda makes sense, but we also need the currency pair, which requires a lookup
             var order = await OnGetOrderDetailsAsync(orderId);
@@ -296,7 +296,10 @@ namespace ExchangeSharp
                 await MakeJsonRequestAsync<JToken>("/exchange/cancel_limit?currencyPair=" +
                     NormalizeMarketSymbol(order.MarketSymbol).UrlEncode() + "&orderId=" + orderId, null, await GetNoncePayloadAsync());
             }
-        }
+
+			//To be implemented in the future
+			return null;
+		}
 
         protected override async Task<IEnumerable<ExchangeTransaction>> OnGetDepositHistoryAsync(string currency)
         {
