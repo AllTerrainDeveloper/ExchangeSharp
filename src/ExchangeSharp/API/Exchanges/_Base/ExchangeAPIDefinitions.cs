@@ -46,7 +46,7 @@ namespace ExchangeSharp
         protected virtual Task<ExchangeOrderResult> OnGetOrderDetailsAsync(string orderId, string symbol = null);
         protected virtual Task<IEnumerable<ExchangeOrderResult>> OnGetOpenOrderDetailsAsync(string symbol = null);
         protected virtual Task<IEnumerable<ExchangeOrderResult>> OnGetCompletedOrderDetailsAsync(string symbol = null, DateTime? afterDate = null);
-        protected virtual Task OnCancelOrderAsync(string orderId, string symbol = null);
+        protected virtual Task<ExchangeOrderResult> OnCancelOrderAsync(string orderId, string symbol = null);
         protected virtual Task<ExchangeWithdrawalResponse> OnWithdrawAsync(ExchangeWithdrawalRequest withdrawalRequest);
         protected virtual Task<Dictionary<string, decimal>> OnGetMarginAmountsAvailableToTradeAsync();
         protected virtual Task<ExchangeMarginPositionResult> OnGetOpenPositionAsync(string symbol);

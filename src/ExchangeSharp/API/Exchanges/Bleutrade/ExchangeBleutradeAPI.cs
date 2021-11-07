@@ -266,7 +266,7 @@ namespace ExchangeSharp
                     return result;
                 }
 
-                protected override async Task OnCancelOrderAsync(string orderId, string marketSymbol = null)
+                protected override async Task<ExchangeOrderResult> OnCancelOrderAsync(string orderId, string marketSymbol = null)
                 {
                     await MakeJsonRequestAsync<JToken>("/market/cancel?orderid=" + orderId, null, await GetNoncePayloadAsync());
                 }

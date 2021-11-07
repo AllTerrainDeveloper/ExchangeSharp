@@ -26,9 +26,12 @@ namespace ExchangeSharp
 		#region [ Implementation ]
 
 		/// <inheritdoc />
-		protected async override Task OnCancelOrderAsync(string orderId, string marketSymbol = null)
+		protected async override Task<ExchangeOrderResult> OnCancelOrderAsync(string orderId, string marketSymbol = null, bool isMargin = false)
 		{
 			await MakeJsonRequestAsync<JToken>($"/orders/{orderId}", null, await GetNoncePayloadAsync(), "DELETE");
+
+			//To be implemented in the future
+			return null;
 		}
 
 		/// <inheritdoc />
@@ -286,7 +289,7 @@ namespace ExchangeSharp
 		}
 
 		/// <inheritdoc />
-		protected async override Task<ExchangeOrderResult> OnGetOrderDetailsAsync(string orderId, string marketSymbol = null, bool isClientOrderId = false)
+		protected async override Task<ExchangeOrderResult> OnGetOrderDetailsAsync(string orderId, string marketSymbol = null, bool isClientOrderId = false, bool isMargin = false)
 		{ // https://docs.ftx.com/#get-order-status and https://docs.ftx.com/#get-order-status-by-client-id
 			if (!string.IsNullOrEmpty(marketSymbol)) throw new NotImplementedException("Searching by marketSymbol is either not implemented by or supported by this exchange. Please submit a PR if you are interested in this feature");
 

@@ -600,7 +600,7 @@ namespace ExchangeSharp
 			return orders;
 		}
 
-		protected override async Task<ExchangeOrderResult> OnGetOrderDetailsAsync(string orderId, string marketSymbol = null, bool isClientOrderId = false)
+		protected override async Task<ExchangeOrderResult> OnGetOrderDetailsAsync(string orderId, string marketSymbol = null, bool isClientOrderId = false, bool isMargin = false)
 		{
 			List<ExchangeOrderResult> orders = new List<ExchangeOrderResult>();
 			Dictionary<string, object> payload = await GetNoncePayloadAsync();
@@ -614,11 +614,13 @@ namespace ExchangeSharp
 			return orders[0];
 		}
 
-		protected override async Task OnCancelOrderAsync(string orderId, string marketSymbol = null)
+		protected override async Task<ExchangeOrderResult> OnCancelOrderAsync(string orderId, string marketSymbol = null, bool isMargin = false)
 		{
 			Dictionary<string, object> payload = await GetNoncePayloadAsync();
 			payload["orderID"] = orderId;
 			JToken token = await MakeJsonRequestAsync<JToken>("/order", BaseUrl, payload, "DELETE");
+			//To be implemented in the future
+			return null;
 		}
 	
 		public async Task CancelAllOrdersAsync(string marketSymbol = null)

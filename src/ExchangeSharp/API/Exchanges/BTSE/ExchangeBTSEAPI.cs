@@ -67,7 +67,7 @@ namespace ExchangeSharp
 				this.ParseCandle(token, marketSymbol, periodSeconds, 1, 2, 3, 4, 0, TimestampType.UnixMilliseconds, 5));
 		}
 
-		protected override async Task OnCancelOrderAsync(string orderId, string? marketSymbol = null)
+		protected override async Task<ExchangeOrderResult> OnCancelOrderAsync(string orderId, string? marketSymbol = null, bool isMargin = false)
 		{
 			var payload = await GetNoncePayloadAsync();
 
@@ -81,6 +81,8 @@ namespace ExchangeSharp
 
 			await MakeJsonRequestAsync<JToken>($"/api/v3.1/order{url.Query}",
 				requestMethod: "DELETE", payload: payload);
+			//To be implemented in the future
+			return null;
 		}
 
 		protected override Task<Dictionary<string, decimal>> OnGetAmountsAsync()

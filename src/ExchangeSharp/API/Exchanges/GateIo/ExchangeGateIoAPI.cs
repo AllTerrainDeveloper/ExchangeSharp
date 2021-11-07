@@ -378,7 +378,7 @@ namespace ExchangeSharp
 			}
 		}
 
-		protected override async Task<ExchangeOrderResult> OnGetOrderDetailsAsync(string orderId, string symbol = null, bool isClientOrderId = false)
+		protected override async Task<ExchangeOrderResult> OnGetOrderDetailsAsync(string orderId, string symbol = null, bool isClientOrderId = false, bool isMargin = false)
 		{
 			if (string.IsNullOrEmpty(symbol))
 			{
@@ -421,7 +421,7 @@ namespace ExchangeSharp
 			return responseToken.Select(x => ParseOrder(x)).ToArray();
 		}
 
-		protected override async Task OnCancelOrderAsync(string orderId, string symbol = null)
+		protected override async Task<ExchangeOrderResult> OnCancelOrderAsync(string orderId, string symbol = null, bool isMargin = false)
 		{
 			if (string.IsNullOrEmpty(symbol))
 			{
@@ -430,6 +430,9 @@ namespace ExchangeSharp
 
 			Dictionary<string, object> payload = await GetNoncePayloadAsync();
 			await MakeJsonRequestAsync<JToken>($"/spot/orders/{orderId}?currency_pair={symbol}", BaseUrl, payload, "DELETE");
+
+			//To be implemented in the future
+			return null;
 		}
 
 		protected override async Task ProcessRequestAsync(IHttpWebRequest request, Dictionary<string, object>? payload)

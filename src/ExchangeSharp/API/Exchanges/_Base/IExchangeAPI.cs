@@ -71,6 +71,25 @@ namespace ExchangeSharp
 		#region REST API
 
 		/// <summary>
+		/// Repays a loan with asset and quatity (or symbol if needed)
+		/// </summary>
+		/// <returns>Transaction id</returns>
+		Task<ExchangeOrderResult> RepayAsync(ExchangeOrderRequest order);
+
+		/// <summary>
+		/// Borrow an asset with quatity
+		/// </summary>
+		/// <returns>Transaction id</returns>
+		Task<ExchangeOrderResult> BorrowAsync(ExchangeOrderRequest order);
+
+		/// <summary>
+		/// Gets margin account info
+		/// </summary>
+		/// <returns>Margin account info</returns>
+		Task<ExchangeAccountAssetBalances> GetMarginAccountInfoAsync();
+		
+
+		/// <summary>
 		/// Gets currencies and related data such as IsEnabled and TxFee (if available)
 		/// </summary>
 		/// <returns>Collection of Currencies</returns>
@@ -209,7 +228,7 @@ namespace ExchangeSharp
 		/// <param name="marketSymbol">Market Symbol</param>
 		/// <param name="isClientOrderId">Whether the order id parameter is the server assigned id or client provided id</param>
 		/// <returns>Order details</returns>
-		Task<ExchangeOrderResult> GetOrderDetailsAsync(string orderId, string? marketSymbol = null, bool isClientOrderId = false);
+		Task<ExchangeOrderResult> GetOrderDetailsAsync(string orderId, string? marketSymbol = null, bool isClientOrderId = false, bool isMargin = false);
 
 		/// <summary>
 		/// Get the details of all open orders
@@ -231,7 +250,7 @@ namespace ExchangeSharp
 		/// </summary>
 		/// <param name="orderId">Order id of the order to cancel</param>
 		/// <param name="marketSymbol">Market symbol of the order to cancel (not required for most exchanges)</param>
-		Task CancelOrderAsync(string orderId, string? marketSymbol = null);
+		Task<ExchangeOrderResult> CancelOrderAsync(string orderId, string? marketSymbol = null, bool isMargin = false);
 
 		/// <summary>
 		/// Asynchronous withdraws request.

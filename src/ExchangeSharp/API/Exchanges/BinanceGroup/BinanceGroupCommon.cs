@@ -531,10 +531,12 @@ namespace ExchangeSharp.BinanceGroup
 		{
 			if (order.Price == null && order.OrderType != OrderType.Market) throw new ArgumentNullException(nameof(order.Price));
 
-			Dictionary<string, object> payload = await GetNoncePayloadAsync();
+			Dictionary<string, object> payload = await GetNoncePayloadAsync().ConfigureAwait(false);
 			payload["symbol"] = order.MarketSymbol;
-			payload["newClientOrderId"] = order.ClientOrderId;
+			if(order.ClientOrderId != null)
+				payload["newClientOrderId"] = order.ClientOrderId;
 			payload["side"] = order.IsBuy ? "BUY" : "SELL";
+
 			if (order.OrderType == OrderType.Stop)
 				payload["type"] = "STOP_LOSS";//if order type is stop loss/limit, then binance expect word 'STOP_LOSS' inestead of 'STOP'
 			else if (order.IsPostOnly == true)
@@ -546,21 +548,31 @@ namespace ExchangeSharp.BinanceGroup
 				payload["type"] = order.OrderType.ToStringUpperInvariant();
 
 			// Binance has strict rules on which prices and quantities are allowed. They have to match the rules defined in the market definition.
-			decimal outputQuantity = await ClampOrderQuantity(order.MarketSymbol, order.Amount);
+			if (order.Clamp)
+			{
+				decimal outputQuantity = await ClampOrderQuantity(order.MarketSymbol, order.Amount).ConfigureAwait(false);
 
-			// Binance does not accept quantities with more than 20 decimal places.
-			payload["quantity"] = Math.Round(outputQuantity, 20);
+				// Binance does not accept quantities with more than 20 decimal places.
+				payload["quantity"] = Math.Round(outputQuantity, 20);
+			}
+			else
+			{
+				payload["quantity"] = order.Amount;
+			}
 			payload["newOrderRespType"] = "FULL";
 
-			if (order.OrderType != OrderType.Market)
+			if (order.OrderType != OrderType.Market && order.Clamp)
 			{
-				decimal outputPrice = await ClampOrderPrice(order.MarketSymbol, order.Price.Value);
+				decimal outputPrice = await ClampOrderPrice(order.MarketSymbol, order.Price.Value).ConfigureAwait(false);
 				payload["timeInForce"] = "GTC";
 				payload["price"] = outputPrice;
 			}
 			order.ExtraParameters.CopyTo(payload);
 
-			JToken? token = await MakeJsonRequestAsync<JToken>("/order", BaseUrlApi, payload, "POST");
+			JToken? token = order.IsMargin ?
+				await MakeJsonRequestAsync<JToken>("/margin/order", BaseUrlSApi, payload, "POST").ConfigureAwait(false) :
+				await MakeJsonRequestAsync<JToken>("/order", BaseUrlApi, payload, "POST").ConfigureAwait(false);
+
             if (token is null)
             {
                 return null;
@@ -568,7 +580,72 @@ namespace ExchangeSharp.BinanceGroup
 			return ParseOrder(token);
 		}
 
-		protected override async Task<ExchangeOrderResult> OnGetOrderDetailsAsync(string orderId, string? marketSymbol = null, bool isClientOrderId = false)
+		protected override async Task<ExchangeOrderResult> OnRepayAsync(ExchangeOrderRequest order)
+		{
+			if (order.Asset == null) throw new ArgumentNullException(nameof(order.Asset));
+			Dictionary<string, object> payload = await GetNoncePayloadAsync();
+
+			payload["asset"] = order.Asset;
+			payload["amount"] = order.Amount;
+
+			JToken? token = await MakeJsonRequestAsync<JToken>("/margin/repay", BaseUrlSApi, payload, "POST");
+			if (token is null)
+			{
+				return null;
+			}
+
+			var errorCode = token.Value<int?>("code") ?? 0;
+			if (errorCode < 0)
+			{
+				return new ExchangeOrderResult { Success = false, Message = token["msg"].ConvertInvariant<string>(), ErrorCode = errorCode, RawJson = token.ToString() };
+			}
+
+			return new ExchangeOrderResult { Success = true, OrderId = token["tranId"].ConvertInvariant<long>().ToString() };
+		}
+
+		protected override async Task<ExchangeAccountAssetBalances> OnGetMarginAccountInfoAsync()
+		{
+			Dictionary<string, object> payload = await GetNoncePayloadAsync().ConfigureAwait(false) ;
+			JToken? token = await MakeJsonRequestAsync<JToken>("/margin/account", BaseUrlSApi, payload, "GET").ConfigureAwait(false);
+			if (token is null)
+			{
+				return null;
+			}
+
+			var errorCode = token.Value<int?>("code") ?? 0;
+			
+			if (errorCode < 0)
+			{
+				return new ExchangeAccountAssetBalances { Success = false, Message = token["msg"].ConvertInvariant<string>(), ErrorCode = errorCode, RawJson = token.ToString() };
+			}
+
+			var userAssets = token.Value<JToken>("userAssets");
+			var accountInfo = new ExchangeAccountAssetBalances();
+			accountInfo.Success = true;
+			accountInfo.RawJson = token.ToString(Formatting.Indented);
+			ParseAccountBalanceInfo(accountInfo, userAssets);
+
+			return accountInfo;
+		}
+
+		private void ParseAccountBalanceInfo(ExchangeAccountAssetBalances accountInfo, JToken userAssets)
+		{
+			foreach (var asset in userAssets)
+			{
+				var newAsset = new ExchangeAccountAssetBalance {
+					Asset = asset.Value<string>("asset").ToStringInvariant(),
+					Borrowed = asset.Value<decimal?>("borrowed"),
+					Interest = asset.Value<decimal?>("interest"),
+					Locked = asset.Value<decimal?>("locked"),
+					Free = asset.Value<decimal?>("free"),
+					Net = asset.Value<decimal?>("netAsset"),
+					EventTime = DateTime.UtcNow
+				};
+				accountInfo.Balances.Add(newAsset);
+			}
+		}
+
+		protected override async Task<ExchangeOrderResult> OnGetOrderDetailsAsync(string orderId, string? marketSymbol = null, bool isClientOrderId = false, bool isMargin = false)
 		{
 			Dictionary<string, object> payload = await GetNoncePayloadAsync();
 			if (string.IsNullOrWhiteSpace(marketSymbol))
@@ -582,13 +659,13 @@ namespace ExchangeSharp.BinanceGroup
 			else
 				payload["orderId"] = orderId;
 
-			JToken token = await MakeJsonRequestAsync<JToken>("/order", BaseUrlApi, payload);
+			JToken token = isMargin ? await MakeJsonRequestAsync<JToken>("/margin/order", BaseUrlSApi, payload) : await MakeJsonRequestAsync<JToken>("/order", BaseUrlApi, payload);
 			ExchangeOrderResult result = ParseOrder(token);
 
 			// Add up the fees from each trade in the order
 			Dictionary<string, object> feesPayload = await GetNoncePayloadAsync();
 			feesPayload["symbol"] = marketSymbol!;
-			JToken feesToken = await MakeJsonRequestAsync<JToken>("/myTrades", BaseUrlApi, feesPayload);
+			JToken feesToken = isMargin ? await MakeJsonRequestAsync<JToken>("/margin/myTrades", BaseUrlApi, feesPayload) : await MakeJsonRequestAsync<JToken>("/myTrades", BaseUrlApi, feesPayload);
 			ParseFees(feesToken, result);
 
 			return result;
@@ -718,8 +795,8 @@ namespace ExchangeSharp.BinanceGroup
 			}
 			return trades;
 		}
-
-		protected override async Task OnCancelOrderAsync(string orderId, string? marketSymbol = null)
+		
+		protected override async Task<ExchangeOrderResult> OnCancelOrderAsync(string orderId, string? marketSymbol = null, bool isMargin = true)
 		{
 			Dictionary<string, object> payload = await GetNoncePayloadAsync();
 			if (string.IsNullOrWhiteSpace(marketSymbol))
@@ -730,8 +807,7 @@ namespace ExchangeSharp.BinanceGroup
 			payload["orderId"] = orderId;
             var token = await MakeJsonRequestAsync<JToken>("/order", BaseUrlApi, payload, "DELETE");
 			var cancelledOrder = ParseOrder(token);
-			if (cancelledOrder.OrderId != orderId)
-				throw new APIException($"Cancelled {cancelledOrder.OrderId} when trying to cancel {orderId}");
+			return cancelledOrder;
 		}
 
 		/// <summary>A withdrawal request. Fee is automatically subtracted from the amount.</summary>
@@ -859,16 +935,26 @@ namespace ExchangeSharp.BinanceGroup
                   }
                 ]
             */
+
+			var errorCode = token.Value<int?>("code") ?? 0;
+			if (errorCode < 0)
+			{
+				return new ExchangeOrderResult { Success = false, Message = token["msg"].ConvertInvariant<string>(), ErrorCode = errorCode, RawJson = token.ToString() };
+			}
+
 			ExchangeOrderResult result = new ExchangeOrderResult
 			{
 				Amount = token["origQty"].ConvertInvariant<decimal>(),
 				AmountFilled = token["executedQty"].ConvertInvariant<decimal>(),
+				QuoteAmountFilled = token["cummulativeQuoteQty"].ConvertInvariant<decimal>(),
 				Price = token["price"].ConvertInvariant<decimal>(),
 				IsBuy = token["side"].ToStringInvariant() == "BUY",
 				OrderDate = CryptoUtility.UnixTimeStampToDateTimeMilliseconds(token["time"].ConvertInvariant<long>(token["transactTime"].ConvertInvariant<long>())),
 				OrderId = token["orderId"].ToStringInvariant(),
 				MarketSymbol = token["symbol"].ToStringInvariant(),
-				ClientOrderId = token["clientOrderId"].ToStringInvariant()
+				ClientOrderId = token["clientOrderId"].ToStringInvariant(),
+				Success = true,
+				RawJson = token.ToString(),
 			};
 
 			result.ResultCode = token["status"].ToStringInvariant();

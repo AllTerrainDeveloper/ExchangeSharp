@@ -27,13 +27,13 @@ namespace ExchangeSharp
 		//public override string WithdrawalUrlPrivate { get; set; } = "https://dex.binance.org/wapi/v3";
 
 		protected override async Task<IEnumerable<string>> OnGetMarketSymbolsAsync() =>
-			(await GetMarketSymbolsMetadataAsync()).Select(msm => msm.MarketSymbol);
+			(await GetMarketSymbolsMetadataAsync().ConfigureAwait(false)).Select(msm => msm.MarketSymbol);
 
 		public override async Task<IEnumerable<ExchangeMarket>> GetMarketSymbolsMetadataAsync()
 		{
 			// [{"base_asset_symbol":"AERGO-46B","list_price":"0.00350000","lot_size":"1.00000000","quote_asset_symbol":"BNB","tick_size":"0.00000001"}, ...
 			var markets = new List<ExchangeMarket>();
-			JToken allSymbols = await MakeJsonRequestAsync<JToken>("/markets");
+			JToken allSymbols = await MakeJsonRequestAsync<JToken>("/markets").ConfigureAwait(false);
 			foreach (JToken marketSymbolToken in allSymbols)
 			{
 				var QuoteCurrency = marketSymbolToken["quote_asset_symbol"].ToStringUpperInvariant();

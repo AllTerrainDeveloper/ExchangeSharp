@@ -292,7 +292,7 @@ namespace ExchangeSharp
 			return ConvertToExchangeOrderBook(maxCount, bl3pOrderBook);
 		}
 
-		protected override async Task OnCancelOrderAsync(string orderId, string marketSymbol = null)
+		protected override async Task<ExchangeOrderResult> OnCancelOrderAsync(string orderId, string marketSymbol = null, bool isMargin = false)
 		{
 			if (string.IsNullOrWhiteSpace(marketSymbol))
 				throw new ArgumentException("Value cannot be null or whitespace.", nameof(marketSymbol));
@@ -307,9 +307,11 @@ namespace ExchangeSharp
 
 			JsonConvert.DeserializeObject<BL3PEmptyResponse>(resultBody)
 				.Except();
+			//To be implemented in the future
+			return null;
 		}
 
-		protected override async Task<ExchangeOrderResult> OnGetOrderDetailsAsync(string orderId, string marketSymbol = null, bool isClientOrderId = false)
+		protected override async Task<ExchangeOrderResult> OnGetOrderDetailsAsync(string orderId, string marketSymbol = null, bool isClientOrderId = false, bool isMargin = false)
 		{
 			if (string.IsNullOrWhiteSpace(marketSymbol))
 				throw new ArgumentException("Value cannot be null or whitespace.", nameof(marketSymbol));

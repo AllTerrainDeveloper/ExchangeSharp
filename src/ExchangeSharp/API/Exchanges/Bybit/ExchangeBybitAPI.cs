@@ -765,7 +765,7 @@ namespace ExchangeSharp
 			return orders;
 		}
 
-		protected override async Task<ExchangeOrderResult> OnGetOrderDetailsAsync(string orderId, string marketSymbol = null, bool isClientOrderId = false)
+		protected override async Task<ExchangeOrderResult> OnGetOrderDetailsAsync(string orderId, string marketSymbol = null, bool isClientOrderId = false, bool isMargin = false)
 		{
 			var orders = await DoGetOrderDetailsAsync(orderId, isClientOrderId: isClientOrderId, marketSymbol: marketSymbol);
 			if (orders.Count() > 0)
@@ -778,7 +778,7 @@ namespace ExchangeSharp
 			}
 		}
 
-		protected override async Task OnCancelOrderAsync(string orderId, string marketSymbol = null)
+		protected override async Task<ExchangeOrderResult> OnCancelOrderAsync(string orderId, string marketSymbol = null, bool isMargin = false)
 		{
 			var extraParams = new Dictionary<string, object>();
 			extraParams["order_id"] = orderId;
@@ -793,8 +793,11 @@ namespace ExchangeSharp
 			
 			var payload = await GetAuthenticatedPayload(extraParams);
 			CheckRetCode(await DoMakeJsonRequestAsync<JToken>($"/v2/private/order/cancel", BaseUrl, payload, "POST"));
-				// new string[] {"0", "30032"});
-				//30032: order has been finished or canceled
+			// new string[] {"0", "30032"});
+			//30032: order has been finished or canceled
+
+			//To be implemented in the future
+			return null;
 		}
 	
 		public async Task CancelAllOrdersAsync(string marketSymbol)

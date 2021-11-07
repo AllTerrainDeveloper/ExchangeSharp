@@ -141,7 +141,7 @@ namespace ExchangeSharp
 			return ParseOrder(token);
 		}
 
-		protected override async Task OnCancelOrderAsync(string orderId, string marketSymbol = null)
+		protected override async Task<ExchangeOrderResult> OnCancelOrderAsync(string orderId, string marketSymbol = null, bool isMargin = false)
 		{
 			Dictionary<string, object> payload = await GetNoncePayloadAsync();
 			if (marketSymbol == null)
@@ -149,9 +149,11 @@ namespace ExchangeSharp
 			payload.Add("pair", NormalizeMarketSymbol(marketSymbol));
 			payload.Add("order_id", orderId);
 			await MakeJsonRequestAsync<JToken>("/user/spot/cancel_order", baseUrl: BaseUrlPrivate, payload: payload, requestMethod: "POST");
+			//To be implemented in the future
+			return null;
 		}
 
-		protected override async Task<ExchangeOrderResult> OnGetOrderDetailsAsync(string orderId, string marketSymbol = null, bool isClientOrderId = false)
+		protected override async Task<ExchangeOrderResult> OnGetOrderDetailsAsync(string orderId, string marketSymbol = null, bool isClientOrderId = false, bool isMargin = false)
 		{
 			if (isClientOrderId) throw new NotImplementedException("Querying by client order ID is not implemented in ExchangeSharp. Please submit a PR if you are interested in this feature");
 			var payload = await GetNoncePayloadAsync();

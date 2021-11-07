@@ -195,7 +195,7 @@ namespace ExchangeSharp
 			return orderDetails;
 		}
 
-		protected override async Task<ExchangeOrderResult> OnGetOrderDetailsAsync(string orderId, string marketSymbol = null, bool isClientOrderId = false)
+		protected override async Task<ExchangeOrderResult> OnGetOrderDetailsAsync(string orderId, string marketSymbol = null, bool isClientOrderId = false, bool isMargin = false)
 		{
 			if (string.IsNullOrWhiteSpace(orderId))
 			{
@@ -233,11 +233,13 @@ namespace ExchangeSharp
 			return orderDetails;
 		}
 
-		protected override async Task OnCancelOrderAsync(string orderId, string marketSymbol = null)
+		protected override async Task<ExchangeOrderResult> OnCancelOrderAsync(string orderId, string marketSymbol = null, bool isMargin = false)
 		{
 			var payload = await GetNoncePayloadAsync();
 			payload["orderId"] = orderId;
 			JToken token = await MakeJsonRequestAsync<JToken>("/trades/v1/order", null, payload, "DELETE");
+			//To be implemented in the future
+			return null;
 		}
 	}
 

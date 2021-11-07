@@ -345,7 +345,7 @@ namespace ExchangeSharp
 		}
 
 		//CancelOrder   12
-		protected override async Task OnCancelOrderAsync(string orderId, string symbol = null)
+		protected override async Task<ExchangeOrderResult> OnCancelOrderAsync(string orderId, string symbol = null, bool isMargin = false)
 		{
 			Dictionary<string, object> payload = new Dictionary<string, object>
 			{
@@ -355,10 +355,13 @@ namespace ExchangeSharp
 			};
 			JToken resp = await MakeJsonRequestAsync<JToken>("/cancel_order.do", null, payload, "POST");
 			CheckResponseToken(resp);
+
+			//To be implemented in the future
+			return null;
 		}
 
 		//GetOrderDetails   13
-		protected override async Task<ExchangeOrderResult> OnGetOrderDetailsAsync(string orderId, string symbol = null, bool isClientOrderId = false)
+		protected override async Task<ExchangeOrderResult> OnGetOrderDetailsAsync(string orderId, string symbol = null, bool isClientOrderId = false, bool isMargin = false)
 		{
 			if (isClientOrderId) throw new NotImplementedException("Querying by client order ID is not implemented in ExchangeSharp. Please submit a PR if you are interested in this feature");
 			Dictionary<string, object> payload = new Dictionary<string, object>

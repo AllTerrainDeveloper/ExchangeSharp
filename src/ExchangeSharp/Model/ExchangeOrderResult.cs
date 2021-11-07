@@ -14,11 +14,12 @@ namespace ExchangeSharp
 {
     using System;
 
-    /// <summary>Result of an exchange order</summary>
-    public sealed class ExchangeOrderResult
-    {
-        /// <summary>Order id</summary>
-        public string OrderId { get; set; }
+	/// <summary>Result of an exchange order</summary>
+	public sealed class ExchangeOrderResult : WebResult
+	{
+
+		/// <summary>Order id</summary>
+		public string OrderId { get; set; }
 
         /// <summary>
         /// Client Order id
@@ -26,18 +27,6 @@ namespace ExchangeSharp
         /// Not all exchanges support this
         /// </summary>
         public string ClientOrderId { get; set; }
-
-        /// <summary>Result of the order</summary>
-        public ExchangeAPIOrderResult Result { get; set; }
-
-        /// <summary>
-        /// Result/Error code from exchange
-        /// Not all exchanges support this
-        /// </summary>
-        public string ResultCode { get; set; }
-
-        /// <summary>Message if any</summary>
-        public string Message { get; set; }
 
         /// <summary>
 		/// Original order amount in the market currency.
@@ -48,6 +37,9 @@ namespace ExchangeSharp
 
         /// <summary>Amount filled in the market currency. May be null if not provided by exchange</summary>
         public decimal? AmountFilled { get; set; }
+
+		/// <summary>Amount filled in the quote currency. May be null if not provided by exchange</summary>
+		public decimal? QuoteAmountFilled { get; set; }
 
 		/// <summary>
 		/// Some exchanges (such as coinbase) only provide RemainingSize.
